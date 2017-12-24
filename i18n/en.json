@@ -1,0 +1,15 @@
+{
+	"@metadata": {
+		"authors": [
+			"Sam Wilson"
+		]
+	},
+	"flickrimporter": "FlickrImporter",
+	"flickrimporter-desc": "An extension for importing images from Flickr to MediaWiki",
+	"prefs-flickrimporter": "FlickrImporter",
+	"flickrimporter-connected": "Your wiki account is connected to Flickr as '$1'.",
+	"flickrimporter-not-connected": "Your wiki account is not connected to Flickr.",
+	"flickrimporter-connect": "Connect to Flickr",
+	"flickrimporter-disconnect": "Disconnect from Flickr",
+	"flickrimporter-error-no-auth-url": "FlickrImporter was unable to get the Flickr authentication URL. The error was: $1"
+}

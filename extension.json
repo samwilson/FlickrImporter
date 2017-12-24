@@ -1,0 +1,58 @@
+{
+	"name": "FlickrImporter",
+	"version": "0.1.0",
+	"author": [
+		"Sam Wilson"
+	],
+	"url": "https://www.mediawiki.org/wiki/Extension:FlickrImporter",
+	"descriptionmsg": "flickrimporter-desc",
+	"license-name": "MIT",
+	"type": "other",
+	"AutoloadClasses": {
+		"MediaWiki\\Extension\\FlickrImporter\\Hooks": "includes/Hooks.php",
+		"MediaWiki\\Extension\\FlickrImporter\\SpecialFlickrImporter": "includes/SpecialFlickrImporter.php",
+		"MediaWiki\\Extension\\FlickrImporter\\FlickrImporter": "includes/FlickrImporter.php"
+	},
+	"ConfigRegistry": {
+		"flickrimporter": "GlobalVarConfig::newInstance"
+	},
+	"config": {
+		"FlickrImporterKey": {
+			"value": ""
+		},
+		"FlickrImporterSecret": {
+			"value": ""
+		}
+	},
+	"Hooks": {
+		"GetPreferences": [
+			"MediaWiki\\Extension\\FlickrImporter\\Hooks::onGetPreferences"
+		]
+	},
+	"MessagesDirs": {
+		"FlickrImporter": [
+			"i18n"
+		]
+	},
+	"ResourceModules": {
+		"ext.boilerPlate.foo": {
+			"scripts": [
+				"ext.boilerPlate.js",
+				"ext.boilerPlate.foo.js"
+			],
+			"styles": [
+				"ext.boilerPlate.foo.css"
+			],
+			"messages": [],
+			"dependencies": []
+		}
+	},
+	"ResourceFileModulePaths": {
+		"localBasePath": "modules",
+		"remoteExtPath": "BoilerPlate/modules"
+	},
+	"SpecialPages": {
+		"FlickrImporter": "MediaWiki\\Extension\\FlickrImporter\\SpecialFlickrImporter"
+	},
+	"manifest_version": 2
+}
