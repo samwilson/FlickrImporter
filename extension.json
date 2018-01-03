@@ -11,6 +11,7 @@
 	"AutoloadClasses": {
 		"MediaWiki\\Extension\\FlickrImporter\\Hooks": "includes/Hooks.php",
 		"MediaWiki\\Extension\\FlickrImporter\\SpecialFlickrImporter": "includes/SpecialFlickrImporter.php",
+		"MediaWiki\\Extension\\FlickrImporter\\MaintenanceFlickrImporter": "includes/MaintenanceFlickrImporter.php",
 		"MediaWiki\\Extension\\FlickrImporter\\FlickrImporter": "includes/FlickrImporter.php"
 	},
 	"ConfigRegistry": {

@@ -9,17 +9,14 @@ namespace MediaWiki\Extension\FlickrImporter;
 use Html;
 use MediaWiki\MediaWikiServices;
 use OAuth\Common\Http\Exception\TokenResponseException;
-use OAuth\Common\Http\Uri\Uri;
 use OAuth\Common\Storage\Session;
-use PHP_CodeSniffer\Tokenizers\PHP;
-use PhpParser\Error;
 use Samwilson\PhpFlickr\PhpFlickr;
 use SpecialPage;
 
 class SpecialFlickrImporter extends SpecialPage {
 
-	public function __construct() {
-		parent::__construct( 'FlickrImporter' );
+	public function __construct( $name = 'FlickrImporter', $restriction = '', $listed = false ) {
+		parent::__construct( $name, $restriction, $listed );
 	}
 
 	/**
@@ -29,6 +26,7 @@ class SpecialFlickrImporter extends SpecialPage {
 	 */
 	public function execute( $sub ) {
 		$this->getOutput()->setPageTitle( $this->msg( 'flickrimporter' ) );
+		$this->requireLogin();
 
 		// Configuration.
 		$config = MediaWikiServices::getInstance()

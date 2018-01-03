@@ -11,5 +11,8 @@
 	"flickrimporter-not-connected": "Your wiki account is not connected to Flickr.",
 	"flickrimporter-connect": "Connect to Flickr",
 	"flickrimporter-disconnect": "Disconnect from Flickr",
-	"flickrimporter-error-no-auth-url": "FlickrImporter was unable to get the Flickr authentication URL. The error was: $1"
+	"flickrimporter-error-no-auth-url": "FlickrImporter was unable to get the Flickr authentication URL. The error was: $1",
+	"flickrimporter-not-logged-in": "You must be logged in",
+	"flickrimporter-imports-link": "Configure your imports at $1",
+	"flickrimporter-template-name": "photo"
 }
