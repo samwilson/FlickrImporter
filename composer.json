@@ -1,6 +1,6 @@
 {
 	"require": {
-		"samwilson/phpflickr": "^4.0"
+		"samwilson/phpflickr": "dev-master"
 	},
 	"require-dev": {
 		"jakub-onderka/php-parallel-lint": "0.9.2",

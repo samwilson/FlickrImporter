@@ -45,7 +45,9 @@ class SpecialFlickrImporter extends SpecialPage {
 		$storage = new Session();
 		$flickr->setOauthStorage($storage);
 
-		if ( $sub === 'connect' ) {
+		if ( $sub === 'help' ) {
+			$this->help();
+		} elseif ( $sub === 'connect' ) {
 			$this->redirectToFlickr( $flickr );
 		} elseif ( $sub === 'callback' ) {
 			$this->retrieveAccessToken( $flickr );
@@ -83,7 +85,25 @@ class SpecialFlickrImporter extends SpecialPage {
 	}
 
 	protected function disconnectFromFlickr( PhpFlickr $flickr ) {
-		// @todo
+		$this->getUser()->setOption( 'flickrimporter-accesstoken', null );
+		$this->getUser()->saveSettings();
+		$prefsTitle = SpecialPage::getTitleFor(
+			'Preferences',
+			null,
+			'mw-prefsection-misc-flickrimporter' );
+		$this->getOutput()->redirect( $prefsTitle->getCanonicalURL() );
+	}
+
+	protected function help() {
+		$this->getOutput()->setPageTitle( $this->msg( 'flickrimporter-help' ) );
+		$lang = $this->getUser()->getOption( 'language' );
+		$helpDir = dirname( __DIR__ ) . '/help';
+		$helpFile = "$helpDir/$lang.txt";
+		if ( !file_exists( $helpFile ) ) {
+			$helpFile = "$helpDir/en.txt";
+		}
+		$helpWikitext = file_get_contents( $helpFile );
+		$this->getOutput()->addWikiText( $helpWikitext );
 	}
 
 	/**
