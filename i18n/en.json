@@ -16,5 +16,6 @@
 	"flickrimporter-imports-link": "Configure your imports at $1",
 	"flickrimporter-template-name": "photo",
 	"flickrimporter-upload-comment": "Imported from $1",
-	"flickrimporter-help": "FlickrImporter help"
+	"flickrimporter-help": "FlickrImporter help",
+	"flickrimporter-flickrid-link": "Flickr ID: $1"
 }

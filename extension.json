@@ -1,18 +1,27 @@
 {
 	"name": "FlickrImporter",
 	"version": "0.1.0",
-	"author": [
-		"Sam Wilson"
-	],
+	"author": [ "Sam Wilson" ],
 	"url": "https://www.mediawiki.org/wiki/Extension:FlickrImporter",
 	"descriptionmsg": "flickrimporter-desc",
-	"license-name": "MIT",
+	"license-name": "GPL-2.0+",
 	"type": "other",
 	"AutoloadClasses": {
 		"MediaWiki\\Extension\\FlickrImporter\\Hooks": "includes/Hooks.php",
 		"MediaWiki\\Extension\\FlickrImporter\\SpecialFlickrImporter": "includes/SpecialFlickrImporter.php",
 		"MediaWiki\\Extension\\FlickrImporter\\MaintenanceFlickrImporter": "includes/MaintenanceFlickrImporter.php",
 		"MediaWiki\\Extension\\FlickrImporter\\FlickrImporter": "includes/FlickrImporter.php"
+	},
+	"Hooks": {
+		"GetPreferences": [
+			"MediaWiki\\Extension\\FlickrImporter\\Hooks::onGetPreferences"
+		],
+		"ParserFirstCallInit": [
+			"MediaWiki\\Extension\\FlickrImporter\\Hooks::onParserFirstCallInit"
+		]
+	},
+	"SpecialPages": {
+		"FlickrImporter": "MediaWiki\\Extension\\FlickrImporter\\SpecialFlickrImporter"
 	},
 	"ConfigRegistry": {
 		"flickrimporter": "GlobalVarConfig::newInstance"
@@ -25,35 +34,13 @@
 			"value": ""
 		}
 	},
-	"Hooks": {
-		"GetPreferences": [
-			"MediaWiki\\Extension\\FlickrImporter\\Hooks::onGetPreferences"
-		]
+	"ExtensionMessagesFiles": {
+		"FlickrImporterMagic": "i18n/magicWords.php"
 	},
 	"MessagesDirs": {
 		"FlickrImporter": [
 			"i18n"
 		]
 	},
-	"ResourceModules": {
-		"ext.boilerPlate.foo": {
-			"scripts": [
-				"ext.boilerPlate.js",
-				"ext.boilerPlate.foo.js"
-			],
-			"styles": [
-				"ext.boilerPlate.foo.css"
-			],
-			"messages": [],
-			"dependencies": []
-		}
-	},
-	"ResourceFileModulePaths": {
-		"localBasePath": "modules",
-		"remoteExtPath": "BoilerPlate/modules"
-	},
-	"SpecialPages": {
-		"FlickrImporter": "MediaWiki\\Extension\\FlickrImporter\\SpecialFlickrImporter"
-	},
-	"manifest_version": 2
+	"manifest_version": 1
 }

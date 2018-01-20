@@ -10,6 +10,7 @@ namespace MediaWiki\Extension\FlickrImporter;
 
 use MediaWiki\Linker\LinkTarget;
 use MediaWiki\MediaWikiServices;
+use Parser;
 use SpecialPage;
 use Title;
 use User;
@@ -64,4 +65,16 @@ class Hooks {
 		return true;
 	}
 
+	/**
+	 * @param Parser $parser
+	 * @return bool
+	 * @throws \MWException
+	 */
+	public static function onParserFirstCallInit( Parser &$parser ) {
+		$flickr = new FlickrImporter();
+		$callback = [ $flickr, 'handlePageProp' ];
+		$flags = Parser::SFH_NO_HASH;
+		$parser->setFunctionHook( 'FLICKRID', $callback, $flags );
+		return true;
+	}
 }

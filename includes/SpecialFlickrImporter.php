@@ -80,7 +80,7 @@ class SpecialFlickrImporter extends SpecialPage {
 		$prefsTitle = SpecialPage::getTitleFor(
 			'Preferences',
 			null, 
-			'mw-prefsection-misc-flickrimporter' );
+			'mw-prefsection-misc' );
 		$this->getOutput()->redirect( $prefsTitle->getCanonicalURL() );
 	}
 
@@ -90,7 +90,7 @@ class SpecialFlickrImporter extends SpecialPage {
 		$prefsTitle = SpecialPage::getTitleFor(
 			'Preferences',
 			null,
-			'mw-prefsection-misc-flickrimporter' );
+			'mw-prefsection-misc' );
 		$this->getOutput()->redirect( $prefsTitle->getCanonicalURL() );
 	}
 

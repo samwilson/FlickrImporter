@@ -5,6 +5,7 @@ use ExtensionRegistry;
 use JsonContent;
 use Maintenance;
 use MediaWiki\MediaWikiServices;
+use MWException;
 use Samwilson\PhpFlickr\PhpFlickr;
 use Samwilson\PhpFlickr\Util;
 use Status;
@@ -19,8 +20,8 @@ use WikiPage;
  */
 class MaintenanceFlickrImporter extends Maintenance {
 
-	/** @var PhpFlickr */
-	protected $flickr;
+	/** @var FlickrImporter */
+	protected $flickrImporter;
 
 	/** @var string[][] Runtime cache of Flickr license names. */
 	protected $licenses;
@@ -77,16 +78,15 @@ class MaintenanceFlickrImporter extends Maintenance {
 		}
 
 		// Set up Flickr.
-		$flickrImporter = new FlickrImporter( $user );
-		$this->flickr = $flickrImporter->getPhpFlickr();
+		$this->flickrImporter = new FlickrImporter( $user );
 
 		// Determine user ID.
 		if ( $import->type === 'user' ) {
 			// Validate the user ID.
-			$userInfo1 = $this->flickr->people_getInfo( $import->id );
+			$userInfo1 = $this->flickrImporter->getPhpFlickr()->people_getInfo( $import->id );
 			if ( !isset( $userInfo1['id'] ) ) {
 				// If not found, try as a username.
-				$userInfo2 = $this->flickr->people()->findByUsername( $import->id );
+				$userInfo2 = $this->flickrImporter->getPhpFlickr()->people()->findByUsername( $import->id );
 				if ( !isset( $userInfo2['id'] ) ) {
 					$this->error( "Unable to determine ID for user '$import->id'\n" );
 					return;
@@ -142,22 +142,23 @@ class MaintenanceFlickrImporter extends Maintenance {
 		$perPage = 500;
 
 		// Get photos.
+		$phpFlickr = $this->flickrImporter->getPhpFlickr();
 		if ( $import->type === 'group' ) {
-			$photos = $this->flickr->groups_pools_getPhotos(
+			$photos = $phpFlickr->groups_pools_getPhotos(
 				$import->id, null, null, null, $extras, $perPage, $page
 			);
 		} elseif ( $import->type === 'user' ) {
-			$photos = $this->flickr->people()->getPhotos(
+			$photos = $phpFlickr->people()->getPhotos(
 				$import->id, null, null, null,
 				null, null, null, null, $extras,
 				$perPage, $page
 			);
 		} elseif ( $import->type === 'album' ) {
-			$photos = $this->flickr->photosets_getPhotos(
+			$photos = $phpFlickr->photosets_getPhotos(
 				$import->id, $extras, null, $perPage, $page
 			);
 		} elseif ( $import->type === 'gallery' ) {
-			$photos = $this->flickr->galleries_getPhotos( $import->id, $extras, $perPage, $page );
+			$photos = $phpFlickr->galleries_getPhotos( $import->id, $extras, $perPage, $page );
 		} else {
 			$this->error( "Unknown import type '$import->type'\n" );
 			return false;
@@ -165,16 +166,26 @@ class MaintenanceFlickrImporter extends Maintenance {
 		return $photos;
 	}
 
+	/**
+	 * @param $photo
+	 * @param User $user
+	 * @throws MWException
+	 */
 	public function importOnePhoto( $photo, User $user ) {
-		$templateName = wfMessage( 'flickrimporter-template-name' );
-		$this->output(
-			"      - Photo " . $photo['id'] . " -- ".$photo['title'] ."\n"
-		);
 		$title = $photo['title'];
 		$photopageUrl = 'https://flic.kr/p/' . Util::base58encode( $photo['id'] );
+
+		// See if we need to import this.
+		if ( $this->flickrImporter->findFlickrPhoto( $photo['id'] ) ) {
+			$this->output( "       - Already imported: $title $photopageUrl\n" );
+			return;
+		}
+
+		// Set up the page template and any other wikitext.
+		$this->output( "      - Importing $title $photopageUrl\n" );
 		$fileUrl = $photo['url_o'];
 		$license = $this->getLicenseName($photo['license']);
-
+		$templateName = wfMessage( 'flickrimporter-template-name' );
 		$wikiText = '{{' . $templateName . "\n"
 			. ' | title = ' . $title. "\n"
 			. ' | description = ' . $photo['description'] . "\n"
@@ -190,14 +201,11 @@ class MaintenanceFlickrImporter extends Maintenance {
 			. ' | flickr_page_url = ' . $photopageUrl . "\n"
 			. ' | flickr_file_url = ' . $fileUrl . "\n"
 			. '}}' . "\n";
-		if ( ExtensionRegistry::getInstance()->isLoaded( 'GeoData' ) ) {
-			// Add coords directly
-			$wikiText .= "{{#coordinates:{$photo['latitude']}|${photo['longitude']}|primary}}\n"; 
-		}
 
 		// We also have to query info on each photo, to get the tags and comments.
-		$photoInfo = $this->flickr->photos_getInfo( $photo['id'] );
+		$photoInfo = $this->flickrImporter->getPhpFlickr()->photos_getInfo( $photo['id'] );
 
+		// Tags.
 		foreach ( $photoInfo['photo']['tags']['tag'] as $tag ) {
 			if ( $tag['machine_tag'] ) {
 				continue;
@@ -208,11 +216,12 @@ class MaintenanceFlickrImporter extends Maintenance {
 
 		// Upload the file. It will not be uploaded if it already exists.
 		$upload = new UploadFromUrl();
-		$upload->initialize( $title, $fileUrl );
+		$fileTitle = $this->flickrImporter->getUniqueFilename( $title );
+		$upload->initialize( $fileTitle, $fileUrl );
 		/** @var Status $status */
 		$status = $upload->fetchFile();
 		if ( !$status->isGood() ) {
-			$this->error("Unable to get file $fileUrl\nStatus: " . $status->getMessage() );
+			$this->error("        Unable to get file $fileUrl\n        Status: " . $status->getMessage() );
 			exit();
 		}
 		$comment = wfMessage( 'flickrimporter-upload-comment', $photopageUrl );
@@ -222,11 +231,18 @@ class MaintenanceFlickrImporter extends Maintenance {
 		if ( !$uploadStatus->isGood() ) {
 			$this->error("        " . $uploadStatus->getMessage()->plain() );
 		}
+		$this->output( " -- imported as: $fileTitle\n" );
 	}
 
+	/**
+	 * Get the English name of the given license.
+	 * @link https://www.flickr.com/services/api/flickr.photos.licenses.getInfo.html
+	 * @param $licenseId
+	 * @return string
+	 */
 	public function getLicenseName($licenseId) {
 		if (is_null($this->licenses)) {
-			$this->licenses = $this->flickr->photosLicenses()->getInfo();
+			$this->licenses = $this->flickrImporter->getPhpFlickr()->photosLicenses()->getInfo();
 		}
 		return (isset($this->licenses[$licenseId])) ? $this->licenses[$licenseId]['name'] : ''; 
 	}
