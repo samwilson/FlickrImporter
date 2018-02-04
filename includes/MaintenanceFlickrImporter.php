@@ -32,6 +32,13 @@ class MaintenanceFlickrImporter extends Maintenance {
 	}
 
 	public function execute() {
+		// Make sure the extension is loaded.
+		if ( !ExtensionRegistry::getInstance()->isLoaded( 'FlickrImporter' ) ) {
+			$this->output("The FlickrImporter extension is not loaded.\n");
+			return false;
+		}
+
+		// Find all the users' import JSON pages.
 		$searchEngine = MediaWikiServices::getInstance()->newSearchEngine();
 		$searchEngine->setNamespaces( [ NS_USER ] );
 		$searchResults = $searchEngine->searchTitle( 'FlickrImporter.json' );
@@ -176,16 +183,21 @@ class MaintenanceFlickrImporter extends Maintenance {
 		$photopageUrl = 'https://flic.kr/p/' . Util::base58encode( $photo['id'] );
 
 		// See if we need to import this.
-		if ( $this->flickrImporter->findFlickrPhoto( $photo['id'] ) ) {
-			$this->output( "       - Already imported: $title $photopageUrl\n" );
+		$alreadyImported = $this->flickrImporter->findFlickrPhoto( $photo['id'] );
+		if ( $alreadyImported instanceof WikiPage ) {
+			$this->output(
+				"      - " . $photo['id'] . " already imported as "
+				. $alreadyImported->mTitle->getDBkey() . " $photopageUrl\n"
+			);
 			return;
 		}
 
 		// Set up the page template and any other wikitext.
-		$this->output( "      - Importing $title $photopageUrl\n" );
+		$this->output( "      - {$photo['id']} importing $title $photopageUrl\n" );
 		$fileUrl = $photo['url_o'];
-		$license = $this->getLicenseName($photo['license']);
 		$templateName = wfMessage( 'flickrimporter-template-name' );
+		$latitude = empty( $photo['latitude'] ) ? '' : $photo['latitude'];
+		$longitude = empty( $photo['longitude'] ) ? '' : $photo['longitude'];
 		$wikiText = '{{' . $templateName . "\n"
 			. ' | title = ' . $title. "\n"
 			. ' | description = ' . $photo['description'] . "\n"
@@ -193,13 +205,11 @@ class MaintenanceFlickrImporter extends Maintenance {
 			. ' | date_taken = ' . $photo['datetaken'] . "\n"
 			. ' | date_taken_granularity = ' . $photo['datetakengranularity'] . "\n"
 			. ' | date_published = ' . date( 'Y-m-d H:i:s', $photo['dateupload'] ) . "\n"
-			. ' | latitude = ' . $photo['latitude'] . "\n"
-			. ' | longitude = ' . $photo['longitude'] . "\n"
-			. ' | license = ' . $license . "\n"
-			. ' | privacy = ' . $photo['privacy'] . "\n"
+			. ' | latitude = ' . $latitude . "\n"
+			. ' | longitude = ' . $longitude . "\n"
+			. ' | license = ' . $this->getLicenseName($photo['license']) . "\n"
+			. ' | privacy = ' . Util::getPrivacyLevelById( $photo['privacy'] ) . "\n"
 			. ' | flickr_id = ' . $photo['id'] . "\n"
-			. ' | flickr_page_url = ' . $photopageUrl . "\n"
-			. ' | flickr_file_url = ' . $fileUrl . "\n"
 			. '}}' . "\n";
 
 		// We also have to query info on each photo, to get the tags and comments.
@@ -216,13 +226,17 @@ class MaintenanceFlickrImporter extends Maintenance {
 
 		// Upload the file. It will not be uploaded if it already exists.
 		$upload = new UploadFromUrl();
-		$fileTitle = $this->flickrImporter->getUniqueFilename( $title );
+		$fileTitle = $this->flickrImporter->getUniqueFilename( $title )
+			. '.' . $photo['originalformat'];
 		$upload->initialize( $fileTitle, $fileUrl );
 		/** @var Status $status */
 		$status = $upload->fetchFile();
 		if ( !$status->isGood() ) {
-			$this->error("        Unable to get file $fileUrl\n        Status: " . $status->getMessage() );
-			exit();
+			$this->error(
+				"        Unable to get file $fileUrl\n"
+				 ."        Status: " . $status->getMessage()
+			);
+			return;
 		}
 		$comment = wfMessage( 'flickrimporter-upload-comment', $photopageUrl );
 		$uploadStatus = $upload->performUpload(
@@ -230,8 +244,9 @@ class MaintenanceFlickrImporter extends Maintenance {
 		);
 		if ( !$uploadStatus->isGood() ) {
 			$this->error("        " . $uploadStatus->getMessage()->plain() );
+			return;
 		}
-		$this->output( " -- imported as: $fileTitle\n" );
+		$this->output( "        imported as: $fileTitle\n" );
 	}
 
 	/**

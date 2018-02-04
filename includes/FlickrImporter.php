@@ -86,7 +86,7 @@ class FlickrImporter {
 	 * @return WikiPage|bool The relevant page, or false if none found.
 	 */
 	public function findFlickrPhoto( $flickrId ) {
-		$db = MediaWikiServices::getInstance()->getDBLoadBalancer()->getConnection( DB_REPLICA );
+		$db = MediaWikiServices::getInstance()->getDBLoadBalancer()->getConnection( DB_SLAVE );
 		$pageId = $db->selectField( 
 			'page_props',
 			'pp_page',
@@ -111,7 +111,7 @@ class FlickrImporter {
 			'page',
 			'COUNT(*)',
 			[
-				'page_namespace' => $title->getNamespace(),
+				'page_namespace' => NS_FILE,
 				'page_title' . $db->buildLike( $title->getDBkey(), $db->anyString() ),
 			],
 			__METHOD__
