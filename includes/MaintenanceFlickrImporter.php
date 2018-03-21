@@ -1,12 +1,12 @@
 <?php
 
 namespace MediaWiki\Extension\FlickrImporter;
+use Exception;
 use ExtensionRegistry;
 use JsonContent;
 use Maintenance;
 use MediaWiki\MediaWikiServices;
 use MWException;
-use Samwilson\PhpFlickr\PhpFlickr;
 use Samwilson\PhpFlickr\Util;
 use Status;
 use stdClass;
@@ -213,15 +213,27 @@ class MaintenanceFlickrImporter extends Maintenance {
 			. '}}' . "\n";
 
 		// We also have to query info on each photo, to get the tags and comments.
-		$photoInfo = $this->flickrImporter->getPhpFlickr()->photos_getInfo( $photo['id'] );
+		$photoInfo = $this->flickrImporter->getPhpFlickr()->photos()->getInfo( $photo['id'] );
+		if (!$photoInfo) {
+			throw new Exception( 'Unable to fetch information about Flickr photo ' . $photo['id'] );
+		}
 
 		// Tags.
-		foreach ( $photoInfo['photo']['tags']['tag'] as $tag ) {
+		foreach ( $photoInfo['tags']['tag'] as $tag ) {
 			if ( $tag['machine_tag'] ) {
 				continue;
 			}
 			$tagTitle = Title::newFromText( 'Category:' . $tag['raw'] );
 			$wikiText .= "[[" . $tagTitle->getFullText() . "]]\n";
+		}
+
+		// Sets (a.k.a. albums).
+		$sets = $this->flickrImporter->getPhpFlickr()
+			->photos()
+			->getSets( [ $photo['id'] ], $photo['owner'] );
+		foreach ( $sets as $set ) {
+			$setTitle = Title::newFromText( 'Category:' . $set['title'] );
+			$wikiText .= "[[" . $setTitle->getFullText() . "]]\n";
 		}
 
 		// Upload the file. It will not be uploaded if it already exists.
