@@ -105,7 +105,7 @@ class FlickrImporter {
 	 * @return string
 	 */
 	public function getUniqueFilename( $initialTitle ) {
-		$title = Title::newFromText( $initialTitle );
+		$title = Title::newFromText( substr( $initialTitle, 0, 230 ) );
 		$db = MediaWikiServices::getInstance()->getDBLoadBalancer()->getConnection( DB_REPLICA );
 		$similar = $db->selectField(
 			'page',

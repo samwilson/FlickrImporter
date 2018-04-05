@@ -11,6 +11,7 @@ use Samwilson\PhpFlickr\Util;
 use Status;
 use stdClass;
 use Title;
+use UploadBase;
 use UploadFromUrl;
 use User;
 use WikiPage;
@@ -238,9 +239,12 @@ class MaintenanceFlickrImporter extends Maintenance {
 
 		// Upload the file. It will not be uploaded if it already exists.
 		$upload = new UploadFromUrl();
-		$fileTitle = $this->flickrImporter->getUniqueFilename( $title )
+		$fileTitleText = $this->flickrImporter->getUniqueFilename( $title )
 			. '.' . $photo['originalformat'];
-		$upload->initialize( $fileTitle, $fileUrl );
+		$fileTitle = Title::newFromText( $fileTitleText, NS_FILE );
+
+		// Fetch file.
+		$upload->initialize( $fileTitle->getText(), $fileUrl );
 		/** @var Status $status */
 		$status = $upload->fetchFile();
 		if ( !$status->isGood() ) {
@@ -250,6 +254,15 @@ class MaintenanceFlickrImporter extends Maintenance {
 			);
 			return;
 		}
+
+		// Verify fetched file.
+		$verification = $upload->verifyUpload();
+		if ( $verification['status'] !== UploadBase::OK ) {
+			$this->error( "        Verification error  " . $verification['status'] . "\n" );
+			return;
+		}
+
+		// Perform upload.
 		$comment = wfMessage( 'flickrimporter-upload-comment', $photopageUrl );
 		$uploadStatus = $upload->performUpload(
 			$comment->plain(), $wikiText, true, $user, [ 'FlickrImporter' ]
@@ -258,7 +271,7 @@ class MaintenanceFlickrImporter extends Maintenance {
 			$this->error("        " . $uploadStatus->getMessage()->plain() );
 			return;
 		}
-		$this->output( "        imported as: $fileTitle\n" );
+		$this->output( "        imported as: " . $fileTitle->getPrefixedDBkey() . "\n" );
 	}
 
 	/**
