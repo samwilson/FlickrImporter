@@ -1,5 +1,22 @@
+
 {
+	"name": "mediawiki/flickr-importer",
+	"type": "mediawiki-extension",
+	"description": "MediaWiki extension for importing photos from Flickr.",
+	"license": "GPL-3.0-or-later",
+	"homepage" : "https://www.mediawiki.org/wiki/Extension:FlickrImporter",
+	"support"    : {
+		"wiki"  : "https://www.mediawiki.org/wiki/Extension:FlickrImporter",
+		"forum" : "https://www.mediawiki.org/wiki/Extension_talk:FlickrImporter",
+		"source": "https://github.com/samwilson/FlickrImporter.git",
+		"issues": "https://phabricator.mediawiki.org/",
+		"irc"   : "irc://irc.freenode.org/mediawiki"
+	},
+	"authors":  [
+		{ "name" : "Sam Wilson" }
+	],
 	"require": {
+		"composer/installers": "^1.0",
 		"samwilson/phpflickr": "^4.3"
 	},
 	"require-dev": {

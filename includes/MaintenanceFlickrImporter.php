@@ -224,6 +224,10 @@ class MaintenanceFlickrImporter extends Maintenance {
 			if ( $tag['machine_tag'] ) {
 				continue;
 			}
+			if (preg_match('/checksum:(md5|sha1)=.*/i', $tag['raw']) === 1) {
+				// Don't import checksum machine tags.
+				continue;
+			}
 			$tagTitle = Title::newFromText( 'Category:' . $tag['raw'] );
 			$wikiText .= "[[" . $tagTitle->getFullText() . "]]\n";
 		}
