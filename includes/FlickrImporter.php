@@ -26,12 +26,15 @@ class FlickrImporter {
 	const PAGE_PROP_FLICKRID = 'flickrimporter_flickrid';
 
 	/**
-	 * @param User $user
+	 * @param User|null $user
 	 */
 	public function __construct( User $user = null ) {
 		$this->user = $user;
 	}
 
+	/**
+	 * @param TokenInterface $accessToken
+	 */
 	public function saveAccessToken( TokenInterface $accessToken ) {
 		$json = json_encode( [
 			'token' => $accessToken->getAccessToken(),
@@ -65,18 +68,23 @@ class FlickrImporter {
 			$token->setAccessToken( $tokenData['token'] );
 			$token->setAccessTokenSecret( $tokenData['secret'] );
 			$storage = new Memory();
-			$storage->storeAccessToken('Flickr', $token);
-			$flickr->setOauthStorage($storage);
+			$storage->storeAccessToken( 'Flickr', $token );
+			$flickr->setOauthStorage( $storage );
 		}
 		return $flickr;
 	}
 
-	public function handlePageProp(Parser &$parser, $flickrId) {
+	/**
+	 * @param Parser &$parser
+	 * @param string $flickrId
+	 * @return array
+	 */
+	public function handlePageProp( Parser &$parser, $flickrId ) {
 		$parser->getOutput()->setProperty( static::PAGE_PROP_FLICKRID, $flickrId );
 		$url = 'https://flic.kr/p/' . Util::base58encode( (int)$flickrId );
-		$link = Html::element('a', [ 'href' => $url ], $flickrId );
+		$link = Html::element( 'a', [ 'href' => $url ], $flickrId );
 		$linkText = wfMessage( 'flickrimporter-flickrid-link', $link )->plain();
-		$html = Html::rawElement('span', [ 'class' => 'flickr-id' ], $linkText);
+		$html = Html::rawElement( 'span', [ 'class' => 'flickr-id' ], $linkText );
 		return [ 0 => $html, 'isHTML' => true ];
 	}
 
@@ -86,8 +94,8 @@ class FlickrImporter {
 	 * @return WikiPage|bool The relevant page, or false if none found.
 	 */
 	public function findFlickrPhoto( $flickrId ) {
-		$db = MediaWikiServices::getInstance()->getDBLoadBalancer()->getConnection( DB_SLAVE );
-		$pageId = $db->selectField( 
+		$db = MediaWikiServices::getInstance()->getDBLoadBalancer()->getConnection( DB_REPLICA );
+		$pageId = $db->selectField(
 			'page_props',
 			'pp_page',
 			[ 'pp_propname' => static::PAGE_PROP_FLICKRID, 'pp_value' => $flickrId ],

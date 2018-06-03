@@ -7,7 +7,10 @@ use MediaWikiTestCase;
 
 class FlickrImporterTest extends MediaWikiTestCase {
 
-	public function testUniqueFilename(  ) {
+	/**
+	 * @covers FlickrImporter
+	 */
+	public function testUniqueFilename() {
 		$flickrImporter = new FlickrImporter();
 
 		// A new file keeps the same name.
@@ -17,14 +20,14 @@ class FlickrImporterTest extends MediaWikiTestCase {
 		);
 
 		// The 2nd file gets a suffix.
-		$this->insertPage('Test file.jpg');
+		$this->insertPage( 'Test file.jpg' );
 		$this->assertEquals(
 			'Test file (2)',
 			$flickrImporter->getUniqueFilename( 'Test file' )
 		);
 
 		// The 3rd file also gets a suffix.
-		$this->insertPage('Test file.pdf');
+		$this->insertPage( 'Test file.pdf' );
 		$this->assertEquals(
 			'Test file (3)',
 			$flickrImporter->getUniqueFilename( 'Test file' )
@@ -35,6 +38,5 @@ class FlickrImporterTest extends MediaWikiTestCase {
 			'Test file four',
 			$flickrImporter->getUniqueFilename( 'Test file four' )
 		);
-
 	}
 }

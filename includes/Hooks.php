@@ -8,7 +8,6 @@
 
 namespace MediaWiki\Extension\FlickrImporter;
 
-use MediaWiki\Linker\LinkTarget;
 use MediaWiki\MediaWikiServices;
 use Parser;
 use SpecialPage;
@@ -20,7 +19,7 @@ class Hooks {
 	/**
 	 * @link https://www.mediawiki.org/wiki/Manual:Hooks/GetPreferences
 	 * @param User $user
-	 * @param array $preferences
+	 * @param array &$preferences
 	 * @return bool
 	 */
 	public static function onGetPreferences( User $user, array &$preferences ) {
@@ -29,21 +28,22 @@ class Hooks {
 		$linkRenderer = MediaWikiServices::getInstance()->getLinkRenderer();
 
 		// Link to the Flickr connection process, or display current connection status.
-		if ( $flickrUser = $flickr->test_login() ) {
+		$flickrUser = $flickr->test_login();
+		if ( $flickrUser ) {
 			// Connected.
 			$logoutLink = $linkRenderer->makeLink(
 				SpecialPage::getTitleFor( 'FlickrImporter', 'disconnect' ),
-				wfMessage('flickrimporter-disconnect')
+				wfMessage( 'flickrimporter-disconnect' )
 			);
-			$message = wfMessage('flickrimporter-connected', $flickrUser['username'] );
+			$message = wfMessage( 'flickrimporter-connected', $flickrUser['username'] );
 			$loginoutDefault = $message . ' ' . $logoutLink;
 		} else {
 			// Not connected.
 			$loginLink = $linkRenderer->makeLink(
 				SpecialPage::getTitleFor( 'FlickrImporter', 'connect' ),
-				wfMessage('flickrimporter-connect')
+				wfMessage( 'flickrimporter-connect' )
 			);
-			$loginoutDefault = wfMessage('flickrimporter-not-connected') . ' ' . $loginLink;
+			$loginoutDefault = wfMessage( 'flickrimporter-not-connected' ) . ' ' . $loginLink;
 		}
 		$preferences['flickrimporter-loginout'] = [
 			'type' => 'info',
@@ -58,7 +58,7 @@ class Hooks {
 		$preferences['flickrimporter-special-link'] = [
 			'type' => 'info',
 			'raw' => true,
-			'default' => wfMessage('flickrimporter-imports-link', $specialLink )->plain(),
+			'default' => wfMessage( 'flickrimporter-imports-link', $specialLink )->plain(),
 			'section' => 'misc/flickrimporter',
 		];
 
@@ -66,7 +66,7 @@ class Hooks {
 	}
 
 	/**
-	 * @param Parser $parser
+	 * @param Parser &$parser
 	 * @return bool
 	 * @throws \MWException
 	 */

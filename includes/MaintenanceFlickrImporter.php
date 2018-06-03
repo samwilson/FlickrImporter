@@ -1,6 +1,7 @@
 <?php
 
 namespace MediaWiki\Extension\FlickrImporter;
+
 use Exception;
 use ExtensionRegistry;
 use JsonContent;
@@ -35,7 +36,7 @@ class MaintenanceFlickrImporter extends Maintenance {
 	public function execute() {
 		// Make sure the extension is loaded.
 		if ( !ExtensionRegistry::getInstance()->isLoaded( 'FlickrImporter' ) ) {
-			$this->output("The FlickrImporter extension is not loaded.\n");
+			$this->output( "The FlickrImporter extension is not loaded.\n" );
 			return false;
 		}
 
@@ -51,6 +52,11 @@ class MaintenanceFlickrImporter extends Maintenance {
 		}
 	}
 
+	/**
+	 * @param Title $title
+	 * @return bool
+	 * @throws MWException
+	 */
 	protected function processOneJsonPage( Title $title ) {
 		$username = $title->getRootText();
 		$user = User::newFromName( $username );
@@ -64,7 +70,7 @@ class MaintenanceFlickrImporter extends Maintenance {
 		foreach ( $imports as $import ) {
 			// Validate import structure.
 			if ( !isset( $import->type ) || !isset( $import->id ) ) {
-				$this->error( 
+				$this->error(
 					"Import has no 'type' or 'id' defined:\n"
 					. json_encode( $import, JSON_PRETTY_PRINT )
 				);
@@ -81,7 +87,7 @@ class MaintenanceFlickrImporter extends Maintenance {
 	 */
 	protected function processOneImport( User $user, $import ) {
 		// Display the label.
-		if (isset($import->description)) {
+		if ( isset( $import->description ) ) {
 			$this->output( '    - Import: ' . $import->description . "\n" );
 		}
 
@@ -121,7 +127,7 @@ class MaintenanceFlickrImporter extends Maintenance {
 				$this->output( "      Unable to find any photos for $import->type '$import->id'\n" );
 				return;
 			}
-			$this->output( 
+			$this->output(
 				'Page ' . $photos['page'] . ' of ' . $photos['pages']
 				. " (". $photos['total'] ." photos)\n"
 			);
@@ -140,10 +146,15 @@ class MaintenanceFlickrImporter extends Maintenance {
 				$this->importOnePhoto( $photoInfo, $user );
 			}
 			$page++;
-		} while ($page < $photos['pages']);
+		} while ( $page < $photos['pages'] );
 	}
 
-	protected function getPhotos($import, $page = 1) {
+	/**
+	 * @param stdClass $import
+	 * @param int $page
+	 * @return bool|string[]
+	 */
+	protected function getPhotos( $import, $page = 1 ) {
 		// Request parameters.
 		$extras = 'description, license, date_upload, date_taken, owner_name, original_format, '
 				. 'last_update, geo, tags, machine_tags, media, url_o';
@@ -175,7 +186,7 @@ class MaintenanceFlickrImporter extends Maintenance {
 	}
 
 	/**
-	 * @param $photo
+	 * @param string[] $photo
 	 * @param User $user
 	 * @throws MWException
 	 */
@@ -208,14 +219,14 @@ class MaintenanceFlickrImporter extends Maintenance {
 			. ' | date_published = ' . date( 'Y-m-d H:i:s', $photo['dateupload'] ) . "\n"
 			. ' | latitude = ' . $latitude . "\n"
 			. ' | longitude = ' . $longitude . "\n"
-			. ' | license = ' . $this->getLicenseName($photo['license']) . "\n"
+			. ' | license = ' . $this->getLicenseName( $photo['license'] ) . "\n"
 			. ' | privacy = ' . Util::getPrivacyLevelById( $photo['privacy'] ) . "\n"
 			. ' | flickr_id = ' . $photo['id'] . "\n"
 			. '}}' . "\n";
 
 		// We also have to query info on each photo, to get the tags and comments.
 		$photoInfo = $this->flickrImporter->getPhpFlickr()->photos()->getInfo( $photo['id'] );
-		if (!$photoInfo) {
+		if ( !$photoInfo ) {
 			throw new Exception( 'Unable to fetch information about Flickr photo ' . $photo['id'] );
 		}
 
@@ -224,7 +235,7 @@ class MaintenanceFlickrImporter extends Maintenance {
 			if ( $tag['machine_tag'] ) {
 				continue;
 			}
-			if (preg_match('/checksum:(md5|sha1)=.*/i', $tag['raw']) === 1) {
+			if ( preg_match( '/checksum:(md5|sha1)=.*/i', $tag['raw'] ) === 1 ) {
 				// Don't import checksum machine tags.
 				continue;
 			}
@@ -272,7 +283,7 @@ class MaintenanceFlickrImporter extends Maintenance {
 			$comment->plain(), $wikiText, true, $user, [ 'FlickrImporter' ]
 		);
 		if ( !$uploadStatus->isGood() ) {
-			$this->error("        " . $uploadStatus->getMessage()->plain() );
+			$this->error( "        " . $uploadStatus->getMessage()->plain() );
 			return;
 		}
 		$this->output( "        imported as: " . $fileTitle->getPrefixedDBkey() . "\n" );
@@ -281,13 +292,13 @@ class MaintenanceFlickrImporter extends Maintenance {
 	/**
 	 * Get the English name of the given license.
 	 * @link https://www.flickr.com/services/api/flickr.photos.licenses.getInfo.html
-	 * @param $licenseId
+	 * @param int $licenseId
 	 * @return string
 	 */
-	public function getLicenseName($licenseId) {
-		if (is_null($this->licenses)) {
+	public function getLicenseName( $licenseId ) {
+		if ( is_null( $this->licenses ) ) {
 			$this->licenses = $this->flickrImporter->getPhpFlickr()->photosLicenses()->getInfo();
 		}
-		return (isset($this->licenses[$licenseId])) ? $this->licenses[$licenseId]['name'] : ''; 
+		return ( isset( $this->licenses[$licenseId] ) ) ? $this->licenses[$licenseId]['name'] : '';
 	}
 }

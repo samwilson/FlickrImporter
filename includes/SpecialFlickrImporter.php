@@ -15,6 +15,12 @@ use SpecialPage;
 
 class SpecialFlickrImporter extends SpecialPage {
 
+	/**
+	 * SpecialFlickrImporter constructor.
+	 * @param string $name
+	 * @param string $restriction
+	 * @param bool $listed
+	 */
 	public function __construct( $name = 'FlickrImporter', $restriction = '', $listed = false ) {
 		parent::__construct( $name, $restriction, $listed );
 	}
@@ -43,7 +49,7 @@ class SpecialFlickrImporter extends SpecialPage {
 			$config->get( 'FlickrImporterSecret' )
 		);
 		$storage = new Session();
-		$flickr->setOauthStorage($storage);
+		$flickr->setOauthStorage( $storage );
 
 		if ( $sub === 'help' ) {
 			$this->help();
@@ -56,17 +62,25 @@ class SpecialFlickrImporter extends SpecialPage {
 		}
 	}
 
+	/**
+	 * @param PhpFlickr $flickr
+	 * @throws \MWException
+	 */
 	protected function redirectToFlickr( PhpFlickr $flickr ) {
-		$callbackUrl = SpecialPage::getTitleFor('FlickrImporter/callback' )->getCanonicalURL();
+		$callbackUrl = SpecialPage::getTitleFor( 'FlickrImporter/callback' )->getCanonicalURL();
 		try {
 			$url = $flickr->getAuthUrl( 'read', $callbackUrl );
 			$this->getOutput()->redirect( $url );
 		} catch ( TokenResponseException $exception ) {
-			$err = $this->msg('flickrimporter-error-no-auth-url', $exception->getMessage() );
-			$this->getOutput()->addHTML( Html::rawElement('p', ['class'=>'error'], $err ) );
+			$err = $this->msg( 'flickrimporter-error-no-auth-url', $exception->getMessage() );
+			$this->getOutput()->addHTML( Html::rawElement( 'p', [ 'class' => 'error' ], $err ) );
 		}
 	}
 
+	/**
+	 * @param PhpFlickr $flickr
+	 * @throws \MWException
+	 */
 	protected function retrieveAccessToken( PhpFlickr $flickr ) {
 		$oauthVerifier = $this->getRequest()->getVal( 'oauth_verifier' );
 		$oauthToken = $this->getRequest()->getVal( 'oauth_token' );
@@ -79,11 +93,15 @@ class SpecialFlickrImporter extends SpecialPage {
 		$this->getUser()->saveSettings();
 		$prefsTitle = SpecialPage::getTitleFor(
 			'Preferences',
-			null, 
+			null,
 			'mw-prefsection-misc' );
 		$this->getOutput()->redirect( $prefsTitle->getCanonicalURL() );
 	}
 
+	/**
+	 * @param PhpFlickr $flickr
+	 * @throws \MWException
+	 */
 	protected function disconnectFromFlickr( PhpFlickr $flickr ) {
 		$this->getUser()->setOption( 'flickrimporter-accesstoken', null );
 		$this->getUser()->saveSettings();
@@ -94,6 +112,9 @@ class SpecialFlickrImporter extends SpecialPage {
 		$this->getOutput()->redirect( $prefsTitle->getCanonicalURL() );
 	}
 
+	/**
+	 * @throws \MWException
+	 */
 	protected function help() {
 		$this->getOutput()->setPageTitle( $this->msg( 'flickrimporter-help' ) );
 		$lang = $this->getUser()->getOption( 'language' );
