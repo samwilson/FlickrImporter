@@ -4,6 +4,7 @@ namespace MediaWiki\Extension\FlickrImporter;
 
 use Html;
 use MediaWiki\MediaWikiServices;
+use MediaWikiTitleCodec;
 use OAuth\Common\Storage\Memory;
 use OAuth\OAuth1\Token\StdOAuth1Token;
 use OAuth\OAuth1\Token\TokenInterface;
@@ -113,7 +114,9 @@ class FlickrImporter {
 	 * @return string
 	 */
 	public function getUniqueFilename( $initialTitle ) {
-		$title = Title::newFromText( substr( $initialTitle, 0, 230 ) );
+		$shortTitle = substr( $initialTitle, 0, 230 );
+		$cleanTitle = preg_replace( MediaWikiTitleCodec::getTitleInvalidRegex(), ' ', $shortTitle );
+		$title = Title::newFromTextThrow( $cleanTitle );
 		$db = MediaWikiServices::getInstance()->getDBLoadBalancer()->getConnection( DB_REPLICA );
 		$similar = $db->selectField(
 			'page',

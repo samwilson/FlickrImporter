@@ -143,6 +143,11 @@ class MaintenanceFlickrImporter extends Maintenance {
 					// we want for this import.
 					continue;
 				}
+				if ( isset( $photoInfo['media'] ) && $photoInfo['media'] === 'video' ) {
+					// Ignore this photo if it's a video.
+					// @TODO Support video importing.
+					continue;
+				}
 				$this->importOnePhoto( $photoInfo, $user );
 			}
 			$page++;

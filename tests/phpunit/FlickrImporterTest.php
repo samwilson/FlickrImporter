@@ -8,7 +8,7 @@ use MediaWikiTestCase;
 class FlickrImporterTest extends MediaWikiTestCase {
 
 	/**
-	 * @covers FlickrImporter
+	 * @covers \MediaWiki\Extension\FlickrImporter\FlickrImporter
 	 */
 	public function testUniqueFilename() {
 		$flickrImporter = new FlickrImporter();
@@ -20,14 +20,14 @@ class FlickrImporterTest extends MediaWikiTestCase {
 		);
 
 		// The 2nd file gets a suffix.
-		$this->insertPage( 'Test file.jpg' );
+		$this->insertPage( 'Test file.jpg', '', NS_FILE );
 		$this->assertEquals(
 			'Test file (2)',
 			$flickrImporter->getUniqueFilename( 'Test file' )
 		);
 
 		// The 3rd file also gets a suffix.
-		$this->insertPage( 'Test file.pdf' );
+		$this->insertPage( 'Test file.pdf', '', NS_FILE );
 		$this->assertEquals(
 			'Test file (3)',
 			$flickrImporter->getUniqueFilename( 'Test file' )
@@ -37,6 +37,17 @@ class FlickrImporterTest extends MediaWikiTestCase {
 		$this->assertEquals(
 			'Test file four',
 			$flickrImporter->getUniqueFilename( 'Test file four' )
+		);
+	}
+
+	/**
+	 * @covers \MediaWiki\Extension\FlickrImporter\FlickrImporter
+	 */
+	public function testIllegalCharsInPhotoTitle() {
+		$flickrImporter = new FlickrImporter();
+		$this->assertEquals(
+			'Test file with illegal "chars"',
+			$flickrImporter->getUniqueFilename( 'Test%20file with|illegal "chars"' )
 		);
 	}
 }
