@@ -10,6 +10,7 @@ namespace MediaWiki\Extension\FlickrImporter;
 
 use MediaWiki\MediaWikiServices;
 use Parser;
+use Samwilson\PhpFlickr\PhpFlickr;
 use SpecialPage;
 use Title;
 use User;
@@ -28,7 +29,7 @@ class Hooks {
 		$linkRenderer = MediaWikiServices::getInstance()->getLinkRenderer();
 
 		// Link to the Flickr connection process, or display current connection status.
-		$flickrUser = $flickr->test_login();
+		$flickrUser = $flickr instanceof PhpFlickr ? $flickr->test()->login() : false;
 		if ( $flickrUser ) {
 			// Connected.
 			$logoutLink = $linkRenderer->makeLink(
