@@ -52,8 +52,8 @@ class FlickrImporter {
 		$config = MediaWikiServices::getInstance()
 			->getConfigFactory()
 			->makeConfig( 'flickrimporter' );
-		if ( !$config->has( 'FlickrImporterKey' )
-			 || !$config->has( 'FlickrImporterSecret' )
+		if ( !$config->get( 'FlickrImporterKey' )
+			 || !$config->get( 'FlickrImporterSecret' )
 		) {
 			// Not configured.
 			return false;
