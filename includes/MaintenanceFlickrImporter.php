@@ -97,7 +97,7 @@ class MaintenanceFlickrImporter extends Maintenance {
 		// Determine user ID.
 		if ( $import->type === 'user' ) {
 			// Validate the user ID.
-			$userInfo1 = $this->flickrImporter->getPhpFlickr()->people_getInfo( $import->id );
+			$userInfo1 = $this->flickrImporter->getPhpFlickr()->people()->getInfo( $import->id );
 			if ( !isset( $userInfo1['id'] ) ) {
 				// If not found, try as a username.
 				$userInfo2 = $this->flickrImporter->getPhpFlickr()->people()->findByUsername( $import->id );
@@ -129,7 +129,7 @@ class MaintenanceFlickrImporter extends Maintenance {
 			}
 			$this->output(
 				'Page ' . $photos['page'] . ' of ' . $photos['pages']
-				. " (". $photos['total'] ." photos)\n"
+				. " (" . $photos['total'] . " photos)\n"
 			);
 			// Import this page's worth of photos.
 			foreach ( $photos['photo'] as $photoInfo ) {
@@ -216,7 +216,7 @@ class MaintenanceFlickrImporter extends Maintenance {
 		$latitude = empty( $photo['latitude'] ) ? '' : $photo['latitude'];
 		$longitude = empty( $photo['longitude'] ) ? '' : $photo['longitude'];
 		$wikiText = '{{' . $templateName . "\n"
-			. ' | title = ' . $title. "\n"
+			. ' | title = ' . $title . "\n"
 			. ' | description = ' . $photo['description'] . "\n"
 			. ' | author = ' . $photo['ownername'] . "\n"
 			. ' | date_taken = ' . $photo['datetaken'] . "\n"
@@ -270,7 +270,7 @@ class MaintenanceFlickrImporter extends Maintenance {
 		if ( !$status->isGood() ) {
 			$this->error(
 				"        Unable to get file $fileUrl\n"
-				 ."        Status: " . $status->getMessage()
+				. "        Status: " . $status->getMessage()
 			);
 			return;
 		}
