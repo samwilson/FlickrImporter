@@ -24,7 +24,7 @@ class FlickrImporter {
 	protected $optionName = 'flickrimporter-accesstoken';
 
 	/** @var string */
-	const PAGE_PROP_FLICKRID = 'flickrimporter_flickrid';
+	public const PAGE_PROP_FLICKRID = 'flickrimporter_flickrid';
 
 	/**
 	 * @param User|null $user

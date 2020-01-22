@@ -301,7 +301,7 @@ class MaintenanceFlickrImporter extends Maintenance {
 	 * @return string
 	 */
 	public function getLicenseName( $licenseId ) {
-		if ( is_null( $this->licenses ) ) {
+		if ( $this->licenses === null ) {
 			$this->licenses = $this->flickrImporter->getPhpFlickr()->photosLicenses()->getInfo();
 		}
 		return ( isset( $this->licenses[$licenseId] ) ) ? $this->licenses[$licenseId]['name'] : '';

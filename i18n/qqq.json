@@ -1,0 +1,19 @@
+{
+  "@metadata": {
+	"authors": [
+	  "Sam Wilson"
+	]
+  },
+  "flickrimporter": "{{name}}",
+  "flickrimporter-desc": "{{desc|name=Diagrams|url=https://www.mediawiki.org/wiki/Extension:FlickrImporter}}",
+  "prefs-flickrimporter": "Section title in Special:Preferences.",
+  "flickrimporter-connected": "Message displayed in Special:Preferences when the user's account is connected to Flickr.\n\n* $1 is their Flickr username.",
+  "flickrimporter-not-connected": "Message displayed in Special:Preferences when the user's account is not connected to Flickr.",
+  "flickrimporter-connect": "Link text for the link that initiates the OAuth connection process.",
+  "flickrimporter-disconnect": "Link text for the link that disconnects the OAuth connection to Flickr.",
+  "flickrimporter-error-no-auth-url": "Error message displayed when the Flickr authentication URL could not be determined.\n\n* $1 is the error message.",
+  "flickrimporter-imports-link": "Label in Special:Preferences directing users to their JSON user page on which they can configure this extension.\n\n* $1 is the link to the page.",
+  "flickrimporter-template-name": "The name of the template that photos' wiki pages will be populated with.",
+  "flickrimporter-upload-comment": "Upload comment that will be used for imported photos.\n\n* $1 is the Flickr URL of the imported photo.",
+  "flickrimporter-flickrid-link": "Text label that appears for the FLICKRID magic word.\n\n* $1 is the Flickr ID (an integer, and a link)."
+}
