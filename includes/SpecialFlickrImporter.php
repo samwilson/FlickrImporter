@@ -8,12 +8,16 @@ namespace MediaWiki\Extension\FlickrImporter;
 
 use Html;
 use MediaWiki\MediaWikiServices;
+use MediaWiki\User\UserOptionsManager;
 use OAuth\Common\Http\Exception\TokenResponseException;
 use OAuth\Common\Storage\Session;
 use Samwilson\PhpFlickr\PhpFlickr;
 use SpecialPage;
 
 class SpecialFlickrImporter extends SpecialPage {
+
+	/** @var UserOptionsManager */
+	private $userOptionsManager;
 
 	/**
 	 * SpecialFlickrImporter constructor.
@@ -23,6 +27,7 @@ class SpecialFlickrImporter extends SpecialPage {
 	 */
 	public function __construct( $name = 'FlickrImporter', $restriction = '', $listed = false ) {
 		parent::__construct( $name, $restriction, $listed );
+		$this->userOptionsManager = MediaWikiServices::getInstance()->getUserOptionsManager();
 	}
 
 	/**
@@ -87,8 +92,8 @@ class SpecialFlickrImporter extends SpecialPage {
 			'token' => $accessToken->getAccessToken(),
 			'secret' => $accessToken->getAccessTokenSecret(),
 		] );
-		$this->getUser()->setOption( 'flickrimporter-accesstoken', $json );
-		$this->getUser()->saveSettings();
+		$this->userOptionsManager->setOption( $this->getUser(), 'flickrimporter-accesstoken', $json );
+		$this->userOptionsManager->saveOptions( $this->getUser() );
 		$prefsTitle = SpecialPage::getTitleFor(
 			'Preferences',
 			null,
@@ -101,8 +106,8 @@ class SpecialFlickrImporter extends SpecialPage {
 	 * @throws \MWException
 	 */
 	protected function disconnectFromFlickr( PhpFlickr $flickr ) {
-		$this->getUser()->setOption( 'flickrimporter-accesstoken', null );
-		$this->getUser()->saveSettings();
+		$this->userOptionsManager->setOption( $this->getUser(), 'flickrimporter-accesstoken', null );
+		$this->userOptionsManager->saveOptions( $this->getUser() );
 		$prefsTitle = SpecialPage::getTitleFor(
 			'Preferences',
 			null,

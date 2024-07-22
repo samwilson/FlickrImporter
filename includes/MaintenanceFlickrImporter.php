@@ -61,8 +61,8 @@ class MaintenanceFlickrImporter extends Maintenance {
 		$username = $title->getRootText();
 		$user = User::newFromName( $username );
 		$this->output( "    For User:" . $user->getName() . "\n" );
-		/** @var JsonContent $importString */
-		$importContent = WikiPage::factory( $title )->getContent();
+		$page = new WikiPage( $title );
+		$importContent = $page->getContent();
 		if ( !$importContent instanceof JsonContent ) {
 			return false;
 		}
@@ -168,9 +168,10 @@ class MaintenanceFlickrImporter extends Maintenance {
 		// Get photos.
 		$phpFlickr = $this->flickrImporter->getPhpFlickr();
 		if ( $import->type === 'group' ) {
-			$photos = $phpFlickr->groups_pools_getPhotos(
-				$import->id, null, null, null, $extras, $perPage, $page
+			$groupsPhotos = $phpFlickr->groupsPools()->getPhotos(
+				$import->id, null, null, $extras, $perPage, $page
 			);
+			$photos = $groupsPhotos['photos'];
 		} elseif ( $import->type === 'user' ) {
 			$photos = $phpFlickr->people()->getPhotos(
 				$import->id, null, null, null,
@@ -178,11 +179,11 @@ class MaintenanceFlickrImporter extends Maintenance {
 				$perPage, $page
 			);
 		} elseif ( $import->type === 'album' ) {
-			$photos = $phpFlickr->photosets_getPhotos(
+			$photos = $phpFlickr->photosets()->getPhotos(
 				$import->id, $extras, null, $perPage, $page
 			);
 		} elseif ( $import->type === 'gallery' ) {
-			$photos = $phpFlickr->galleries_getPhotos( $import->id, $extras, $perPage, $page );
+			$photos = $phpFlickr->galleries()->getPhotos( $import->id, $extras, $perPage, $page );
 		} else {
 			$this->error( "Unknown import type '$import->type'\n" );
 			return false;
@@ -251,13 +252,13 @@ class MaintenanceFlickrImporter extends Maintenance {
 		// Sets (a.k.a. albums).
 		$sets = $this->flickrImporter->getPhpFlickr()
 			->photos()
-			->getSets( [ $photo['id'] ], $photo['owner'] );
-		foreach ( $sets as $set ) {
+			->getAllContexts( $photo['id'] );
+		foreach ( $sets['set'] ?? [] as $set ) {
 			$setTitle = Title::newFromText( 'Category:' . $set['title'] );
 			$wikiText .= "[[" . $setTitle->getFullText() . "]]\n";
 		}
 
-		// Upload the file. It will not be uploaded if it already exists.
+		// Get the file upload.
 		$upload = new UploadFromUrl();
 		$fileTitleText = $this->flickrImporter->getUniqueFilename( $title )
 			. '.' . $photo['originalformat'];
@@ -272,6 +273,14 @@ class MaintenanceFlickrImporter extends Maintenance {
 				"        Unable to get file $fileUrl\n"
 				. "        Status: " . $status->getMessage()
 			);
+			return;
+		}
+
+		// Check warnings.
+		$warnings = $upload->checkWarnings();
+		if ( $warnings ) {
+			// @todo Output actual warnings.
+			$this->error( "        Not uploaded. Warnings: " . implode( ',', array_keys( $warnings ) ) );
 			return;
 		}
 
