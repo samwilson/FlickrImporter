@@ -4,6 +4,7 @@ namespace MediaWiki\Extension\FlickrImporter;
 
 use Html;
 use MediaWiki\MediaWikiServices;
+use MediaWiki\Page\WikiPageFactory;
 use MediaWikiTitleCodec;
 use OAuth\Common\Storage\Memory;
 use OAuth\OAuth1\Token\StdOAuth1Token;
@@ -26,11 +27,15 @@ class FlickrImporter {
 	/** @var string */
 	public const PAGE_PROP_FLICKRID = 'flickrimporter_flickrid';
 
+	/** @var UserOptionsManager */
+	private $userOptionsManager;
+
 	/**
 	 * @param User|null $user
 	 */
 	public function __construct( User $user = null ) {
 		$this->user = $user;
+		$this->userOptionsManager = MediaWikiServices::getInstance()->getUserOptionsManager();
 	}
 
 	/**
@@ -41,8 +46,8 @@ class FlickrImporter {
 			'token' => $accessToken->getAccessToken(),
 			'secret' => $accessToken->getAccessTokenSecret(),
 		] );
-		$this->user->setOption( $this->optionName, $json );
-		$this->user->saveSettings();
+		$this->userOptionsManager->setOption( $this->user, $this->optionName, $json );
+		$this->userOptionsManager->saveOptions( $this->user );
 	}
 
 	/**
@@ -62,7 +67,7 @@ class FlickrImporter {
 			$config->get( 'FlickrImporterKey' ),
 			$config->get( 'FlickrImporterSecret' )
 		);
-		$tokenJson = $this->user->getOption( $this->optionName );
+		$tokenJson = $this->userOptionsManager->getOption( $this->user, $this->optionName );
 		if ( $tokenJson ) {
 			$tokenData = json_decode( $tokenJson, true );
 			$token = new StdOAuth1Token();
@@ -81,7 +86,7 @@ class FlickrImporter {
 	 * @return array
 	 */
 	public function handlePageProp( Parser &$parser, $flickrId ) {
-		$parser->getOutput()->setProperty( static::PAGE_PROP_FLICKRID, $flickrId );
+		$parser->getOutput()->setPageProperty( static::PAGE_PROP_FLICKRID, $flickrId );
 		$url = 'https://flic.kr/p/' . Util::base58encode( (int)$flickrId );
 		$link = Html::element( 'a', [ 'href' => $url ], $flickrId );
 		$linkText = wfMessage( 'flickrimporter-flickrid-link', $link )->plain();
@@ -103,7 +108,7 @@ class FlickrImporter {
 			__METHOD__
 		);
 		if ( $pageId ) {
-			return WikiPage::newFromID( $pageId );
+			return WikiPageFactory::newFromID( $pageId );
 		}
 		return false;
 	}

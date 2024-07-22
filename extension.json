@@ -35,12 +35,14 @@
 		}
 	},
 	"ExtensionMessagesFiles": {
-		"FlickrImporterMagic": "i18n/magicWords.php"
+		"FlickrImporterAliases": "FlickrImporter.alias.php",
+		"FlickrImporterMagic": "FlickrImporter.i18n.magic.php"
 	},
 	"MessagesDirs": {
 		"FlickrImporter": [
 			"i18n"
 		]
 	},
+	"load_composer_autoloader": true,
 	"manifest_version": 2
 }
