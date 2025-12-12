@@ -124,7 +124,7 @@ class MaintenanceFlickrImporter extends Maintenance {
 		if ( !is_array( $import->privacy ) ) {
 			$import->privacy = [ $import->privacy ];
 		}
-		$this->output("      (privacy levels: " . join( ', ', $import->privacy ) . ")\n" );
+		$this->output( "      (privacy levels: " . implode( ', ', $import->privacy ) . ")\n" );
 
 		// Get the photos.
 		$page = 1;
