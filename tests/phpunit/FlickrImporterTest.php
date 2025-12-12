@@ -3,15 +3,26 @@
 namespace MediaWiki\Extension\FlickrImporter\Tests;
 
 use MediaWiki\Extension\FlickrImporter\FlickrImporter;
-use MediaWikiTestCase;
+use MediaWikiIntegrationTestCase;
 
-class FlickrImporterTest extends MediaWikiTestCase {
+/**
+ * @group Database
+ */
+class FlickrImporterTest extends MediaWikiIntegrationTestCase {
+
+	private function getFlickrImporter(): FlickrImporter {
+		return new FlickrImporter(
+			$this->getServiceContainer()->getUserOptionsManager(),
+			$this->getServiceContainer()->getWikiPageFactory(),
+			$this->getServiceContainer()->getConnectionProvider()
+		);
+	}
 
 	/**
 	 * @covers \MediaWiki\Extension\FlickrImporter\FlickrImporter
 	 */
 	public function testUniqueFilename() {
-		$flickrImporter = new FlickrImporter();
+		$flickrImporter = $this->getFlickrImporter();
 
 		// A new file keeps the same name.
 		$this->assertEquals(
@@ -44,7 +55,7 @@ class FlickrImporterTest extends MediaWikiTestCase {
 	 * @covers \MediaWiki\Extension\FlickrImporter\FlickrImporter
 	 */
 	public function testIllegalCharsInPhotoTitle() {
-		$flickrImporter = new FlickrImporter();
+		$flickrImporter = $this->getFlickrImporter();
 		$this->assertEquals(
 			'Test file with illegal "chars"',
 			$flickrImporter->getUniqueFilename( 'Test%20file with|illegal "chars"' )

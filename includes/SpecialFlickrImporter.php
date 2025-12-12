@@ -6,7 +6,7 @@
 
 namespace MediaWiki\Extension\FlickrImporter;
 
-use Html;
+use MediaWiki\Html\Html;
 use MediaWiki\MediaWikiServices;
 use MediaWiki\User\UserOptionsManager;
 use OAuth\Common\Http\Exception\TokenResponseException;
@@ -36,7 +36,7 @@ class SpecialFlickrImporter extends SpecialPage {
 	 * @return string
 	 */
 	public function execute( $sub ) {
-		$this->getOutput()->setPageTitle( $this->msg( 'flickrimporter' ) );
+		$this->getOutput()->setPageTitle( $this->msg( 'flickrimporter' )->text() );
 		$this->requireLogin();
 
 		// Configuration.

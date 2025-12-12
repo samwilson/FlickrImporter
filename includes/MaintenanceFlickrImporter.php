@@ -8,6 +8,7 @@ use JsonContent;
 use Maintenance;
 use MediaWiki\MediaWikiServices;
 use MWException;
+use Samwilson\PhpFlickr\FlickrException;
 use Samwilson\PhpFlickr\Util;
 use Status;
 use stdClass;
@@ -92,13 +93,19 @@ class MaintenanceFlickrImporter extends Maintenance {
 		}
 
 		// Set up Flickr.
-		$this->flickrImporter = new FlickrImporter( $user );
+		$this->flickrImporter = new FlickrImporter(
+			$this->getServiceContainer()->getUserOptionsManager(),
+			$this->getServiceContainer()->getWikiPageFactory(),
+			$this->getServiceContainer()->getConnectionProvider(),
+			$user
+		);
 
 		// Determine user ID.
 		if ( $import->type === 'user' ) {
 			// Validate the user ID.
-			$userInfo1 = $this->flickrImporter->getPhpFlickr()->people()->getInfo( $import->id );
-			if ( !isset( $userInfo1['id'] ) ) {
+			try {
+				$this->flickrImporter->getPhpFlickr()->people()->getInfo( $import->id );
+			} catch ( FlickrException $e ) {
 				// If not found, try as a username.
 				$userInfo2 = $this->flickrImporter->getPhpFlickr()->people()->findByUsername( $import->id );
 				if ( !isset( $userInfo2['id'] ) ) {
@@ -117,6 +124,7 @@ class MaintenanceFlickrImporter extends Maintenance {
 		if ( !is_array( $import->privacy ) ) {
 			$import->privacy = [ $import->privacy ];
 		}
+		$this->output("      (privacy levels: " . join( ', ', $import->privacy ) . ")\n" );
 
 		// Get the photos.
 		$page = 1;
@@ -205,7 +213,7 @@ class MaintenanceFlickrImporter extends Maintenance {
 		if ( $alreadyImported instanceof WikiPage ) {
 			$this->output(
 				"      - " . $photo['id'] . " already imported as "
-				. $alreadyImported->mTitle->getDBkey() . " $photopageUrl\n"
+				. $alreadyImported->getTitle()->getDBkey() . " $photopageUrl\n"
 			);
 			return;
 		}

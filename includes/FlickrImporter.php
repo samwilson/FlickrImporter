@@ -2,24 +2,22 @@
 
 namespace MediaWiki\Extension\FlickrImporter;
 
-use Html;
+use MediaWiki\Html\Html;
 use MediaWiki\MediaWikiServices;
+use MediaWiki\Page\WikiPage;
 use MediaWiki\Page\WikiPageFactory;
-use MediaWikiTitleCodec;
+use MediaWiki\Parser\Parser;
+use MediaWiki\Title\Title;
+use MediaWiki\Title\TitleParser;
+use MediaWiki\User\User;
+use MediaWiki\User\UserOptionsManager;
 use OAuth\Common\Storage\Memory;
 use OAuth\OAuth1\Token\StdOAuth1Token;
-use OAuth\OAuth1\Token\TokenInterface;
-use Parser;
 use Samwilson\PhpFlickr\PhpFlickr;
 use Samwilson\PhpFlickr\Util;
-use Title;
-use User;
-use WikiPage;
+use Wikimedia\Rdbms\IConnectionProvider;
 
 class FlickrImporter {
-
-	/** @var User */
-	protected $user;
 
 	/** @var string */
 	protected $optionName = 'flickrimporter-accesstoken';
@@ -27,27 +25,12 @@ class FlickrImporter {
 	/** @var string */
 	public const PAGE_PROP_FLICKRID = 'flickrimporter_flickrid';
 
-	/** @var UserOptionsManager */
-	private $userOptionsManager;
-
-	/**
-	 * @param User|null $user
-	 */
-	public function __construct( User $user = null ) {
-		$this->user = $user;
-		$this->userOptionsManager = MediaWikiServices::getInstance()->getUserOptionsManager();
-	}
-
-	/**
-	 * @param TokenInterface $accessToken
-	 */
-	public function saveAccessToken( TokenInterface $accessToken ) {
-		$json = json_encode( [
-			'token' => $accessToken->getAccessToken(),
-			'secret' => $accessToken->getAccessTokenSecret(),
-		] );
-		$this->userOptionsManager->setOption( $this->user, $this->optionName, $json );
-		$this->userOptionsManager->saveOptions( $this->user );
+	public function __construct(
+		private readonly UserOptionsManager $userOptionsManager,
+		private readonly WikiPageFactory $wikiPageFactory,
+		private readonly IConnectionProvider $connectionProvider,
+		private ?User $user = null
+	) {
 	}
 
 	/**
@@ -100,7 +83,7 @@ class FlickrImporter {
 	 * @return WikiPage|bool The relevant page, or false if none found.
 	 */
 	public function findFlickrPhoto( $flickrId ) {
-		$db = MediaWikiServices::getInstance()->getDBLoadBalancer()->getConnection( DB_REPLICA );
+		$db = $this->connectionProvider->getReplicaDatabase();
 		$pageId = $db->selectField(
 			'page_props',
 			'pp_page',
@@ -108,7 +91,7 @@ class FlickrImporter {
 			__METHOD__
 		);
 		if ( $pageId ) {
-			return WikiPageFactory::newFromID( $pageId );
+			return $this->wikiPageFactory->newFromID( $pageId );
 		}
 		return false;
 	}
@@ -118,11 +101,11 @@ class FlickrImporter {
 	 * @param string $initialTitle The input filename, without an extension or NS prefix.
 	 * @return string
 	 */
-	public function getUniqueFilename( $initialTitle ) {
+	public function getUniqueFilename( $initialTitle ): string {
 		$shortTitle = substr( $initialTitle, 0, 230 );
-		$cleanTitle = preg_replace( MediaWikiTitleCodec::getTitleInvalidRegex(), ' ', $shortTitle );
+		$cleanTitle = preg_replace( TitleParser::getTitleInvalidRegex(), ' ', $shortTitle );
 		$title = Title::newFromTextThrow( $cleanTitle );
-		$db = MediaWikiServices::getInstance()->getDBLoadBalancer()->getConnection( DB_REPLICA );
+		$db = $this->connectionProvider->getReplicaDatabase();
 		$similar = $db->selectField(
 			'page',
 			'COUNT(*)',
