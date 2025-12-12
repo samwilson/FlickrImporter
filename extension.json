@@ -2,10 +2,13 @@
 	"name": "FlickrImporter",
 	"version": "0.1.0",
 	"author": [ "Sam Wilson" ],
-	"url": "https://www.mediawiki.org/wiki/Extension:FlickrImporter",
+	"url": "https://www.mediawiki.org/wiki/Special:MyLanguage/Extension:FlickrImporter",
 	"descriptionmsg": "flickrimporter-desc",
 	"license-name": "GPL-2.0+",
 	"type": "other",
+	"requires": {
+		"MediaWiki": ">= 1.44"
+	},
 	"AutoloadClasses": {
 		"MediaWiki\\Extension\\FlickrImporter\\Hooks": "includes/Hooks.php",
 		"MediaWiki\\Extension\\FlickrImporter\\SpecialFlickrImporter": "includes/SpecialFlickrImporter.php",
@@ -13,12 +16,19 @@
 		"MediaWiki\\Extension\\FlickrImporter\\FlickrImporter": "includes/FlickrImporter.php"
 	},
 	"Hooks": {
-		"GetPreferences": [
-			"MediaWiki\\Extension\\FlickrImporter\\Hooks::onGetPreferences"
-		],
-		"ParserFirstCallInit": [
-			"MediaWiki\\Extension\\FlickrImporter\\Hooks::onParserFirstCallInit"
-		]
+		"GetPreferences": "FlickrImporterHooks",
+		"ParserFirstCallInit": "FlickrImporterHooks"
+	},
+	"HookHandlers": {
+		"FlickrImporterHooks": {
+			"class": "MediaWiki\\Extension\\FlickrImporter\\Hooks",
+			"services": [
+				"UserOptionsManager",
+				"WikiPageFactory",
+				"ConnectionProvider",
+				"LinkRenderer"
+			]
+		}
 	},
 	"SpecialPages": {
 		"FlickrImporter": "MediaWiki\\Extension\\FlickrImporter\\SpecialFlickrImporter"

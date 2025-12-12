@@ -8,26 +8,37 @@
 
 namespace MediaWiki\Extension\FlickrImporter;
 
-use MediaWiki\MediaWikiServices;
-use Parser;
+use MediaWiki\Hook\ParserFirstCallInitHook;
+use MediaWiki\Linker\LinkRenderer;
+use MediaWiki\Page\WikiPageFactory;
+use MediaWiki\Parser\Parser;
+use MediaWiki\Preferences\Hook\GetPreferencesHook;
+use MediaWiki\SpecialPage\SpecialPage;
+use MediaWiki\Title\Title;
+use MediaWiki\User\UserOptionsManager;
 use Samwilson\PhpFlickr\FlickrException;
 use Samwilson\PhpFlickr\PhpFlickr;
-use SpecialPage;
-use Title;
-use User;
+use Wikimedia\Rdbms\IConnectionProvider;
 
-class Hooks {
+class Hooks implements GetPreferencesHook, ParserFirstCallInitHook {
 
-	/**
-	 * @link https://www.mediawiki.org/wiki/Manual:Hooks/GetPreferences
-	 * @param User $user
-	 * @param array &$preferences
-	 * @return bool
-	 */
-	public static function onGetPreferences( User $user, array &$preferences ) {
-		$flickrImporter = new FlickrImporter( $user );
+	public function __construct(
+		private readonly UserOptionsManager $userOptionsManager,
+		private readonly WikiPageFactory $wikiPageFactory,
+		private readonly IConnectionProvider $connectionProvider,
+		private readonly LinkRenderer $linkRenderer
+	) {
+	}
+
+	/** @inheritDoc */
+	public function onGetPreferences( $user, &$preferences ) {
+		$flickrImporter = new FlickrImporter(
+			$this->userOptionsManager,
+			$this->wikiPageFactory,
+			$this->connectionProvider,
+			$user
+		);
 		$flickr = $flickrImporter->getPhpFlickr();
-		$linkRenderer = MediaWikiServices::getInstance()->getLinkRenderer();
 
 		// Link to the Flickr connection process, or display current connection status.
 		$flickrUser = false;
@@ -40,7 +51,7 @@ class Hooks {
 		}
 		if ( $flickrUser ) {
 			// Connected.
-			$logoutLink = $linkRenderer->makeLink(
+			$logoutLink = $this->linkRenderer->makeLink(
 				SpecialPage::getTitleFor( 'FlickrImporter', 'disconnect' ),
 				wfMessage( 'flickrimporter-disconnect' )
 			);
@@ -48,7 +59,7 @@ class Hooks {
 			$loginoutDefault = $message . ' ' . $logoutLink;
 		} else {
 			// Not connected.
-			$loginLink = $linkRenderer->makeLink(
+			$loginLink = $this->linkRenderer->makeLink(
 				SpecialPage::getTitleFor( 'FlickrImporter', 'connect' ),
 				wfMessage( 'flickrimporter-connect' )
 			);
@@ -63,7 +74,7 @@ class Hooks {
 
 		// Link to the user's FlickrImporter.json configuration page.
 		$jsonPage = Title::newFromText( $user->getUserPage()->getFullText() . '/FlickrImporter.json' );
-		$specialLink = $linkRenderer->makeLink( $jsonPage );
+		$specialLink = $this->linkRenderer->makeLink( $jsonPage );
 		$preferences['flickrimporter-special-link'] = [
 			'type' => 'info',
 			'raw' => true,
@@ -74,13 +85,9 @@ class Hooks {
 		return true;
 	}
 
-	/**
-	 * @param Parser &$parser
-	 * @return bool
-	 * @throws \MWException
-	 */
-	public static function onParserFirstCallInit( Parser &$parser ) {
-		$flickr = new FlickrImporter();
+	/** @inheritDoc */
+	public function onParserFirstCallInit( $parser ) {
+		$flickr = new FlickrImporter( $this->userOptionsManager, $this->wikiPageFactory, $this->connectionProvider );
 		$callback = [ $flickr, 'handlePageProp' ];
 		$flags = Parser::SFH_NO_HASH;
 		$parser->setFunctionHook( 'FLICKRID', $callback, $flags );
