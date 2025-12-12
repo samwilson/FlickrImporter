@@ -14,8 +14,8 @@
 		{ "name" : "Sam Wilson" }
 	],
 	"require": {
-		"composer/installers": "^2.0",
-		"samwilson/phpflickr": "^6.0"
+		"composer/installers": "^1|^2",
+		"samwilson/phpflickr": "^6"
 	},
 	"require-dev": {
 		"php-parallel-lint/php-parallel-lint": "^1.0",
