@@ -1,6 +1,6 @@
 {
 	"name": "FlickrImporter",
-	"version": "0.3.1",
+	"version": "0.4.0",
 	"author": [ "Sam Wilson" ],
 	"url": "https://www.mediawiki.org/wiki/Special:MyLanguage/Extension:FlickrImporter",
 	"descriptionmsg": "flickrimporter-desc",
