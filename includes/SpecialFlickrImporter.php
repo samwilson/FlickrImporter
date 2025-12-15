@@ -8,11 +8,11 @@ namespace MediaWiki\Extension\FlickrImporter;
 
 use MediaWiki\Html\Html;
 use MediaWiki\MediaWikiServices;
+use MediaWiki\SpecialPage\SpecialPage;
 use MediaWiki\User\UserOptionsManager;
 use OAuth\Common\Http\Exception\TokenResponseException;
 use OAuth\Common\Storage\Session;
 use Samwilson\PhpFlickr\PhpFlickr;
-use SpecialPage;
 
 class SpecialFlickrImporter extends SpecialPage {
 
