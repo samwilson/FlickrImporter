@@ -3,20 +3,19 @@
 namespace MediaWiki\Extension\FlickrImporter;
 
 use Exception;
-use ExtensionRegistry;
-use JsonContent;
-use Maintenance;
+use MediaWiki\Content\JsonContent;
+use MediaWiki\Maintenance\Maintenance;
 use MediaWiki\MediaWikiServices;
-use MWException;
+use MediaWiki\Page\WikiPage;
+use MediaWiki\Registration\ExtensionRegistry;
+use MediaWiki\Status\Status;
+use MediaWiki\Title\Title;
+use MediaWiki\Upload\UploadBase;
+use MediaWiki\Upload\UploadFromUrl;
+use MediaWiki\User\User;
 use Samwilson\PhpFlickr\FlickrException;
 use Samwilson\PhpFlickr\Util;
-use Status;
 use stdClass;
-use Title;
-use UploadBase;
-use UploadFromUrl;
-use User;
-use WikiPage;
 
 /**
  * Maintenance script to import photos from Flickr.
@@ -34,6 +33,7 @@ class MaintenanceFlickrImporter extends Maintenance {
 		$this->addDescription( 'Import photos from Flickr.' );
 	}
 
+	/** @inheritDoc */
 	public function execute() {
 		// Make sure the extension is loaded.
 		if ( !ExtensionRegistry::getInstance()->isLoaded( 'FlickrImporter' ) ) {
@@ -56,7 +56,6 @@ class MaintenanceFlickrImporter extends Maintenance {
 	/**
 	 * @param Title $title
 	 * @return bool
-	 * @throws MWException
 	 */
 	protected function processOneJsonPage( Title $title ) {
 		$username = $title->getRootText();
@@ -202,7 +201,6 @@ class MaintenanceFlickrImporter extends Maintenance {
 	/**
 	 * @param string[] $photo
 	 * @param User $user
-	 * @throws MWException
 	 */
 	public function importOnePhoto( $photo, User $user ) {
 		$title = $photo['title'];
