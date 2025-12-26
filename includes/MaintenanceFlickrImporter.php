@@ -10,12 +10,12 @@ use MediaWiki\Page\WikiPage;
 use MediaWiki\Registration\ExtensionRegistry;
 use MediaWiki\Status\Status;
 use MediaWiki\Title\Title;
-use MediaWiki\Upload\UploadBase;
-use MediaWiki\Upload\UploadFromUrl;
 use MediaWiki\User\User;
 use Samwilson\PhpFlickr\FlickrException;
 use Samwilson\PhpFlickr\Util;
 use stdClass;
+use UploadBase;
+use UploadFromUrl;
 
 /**
  * Maintenance script to import photos from Flickr.
@@ -148,6 +148,7 @@ class MaintenanceFlickrImporter extends Maintenance {
 				if ( !in_array( $photoInfo['privacy'], $import->privacy ) ) {
 					// Ignore this photo if it's privacy level is not listed in the ones
 					// we want for this import.
+					$this->output( '      - Photo not privacy ' . $import->privacy . ': ' . $photoInfo['id'] . "\n" );
 					continue;
 				}
 				if ( isset( $photoInfo['media'] ) && $photoInfo['media'] === 'video' ) {
@@ -216,6 +217,11 @@ class MaintenanceFlickrImporter extends Maintenance {
 			return;
 		}
 
+		// Also fetch largest size if original isn't available.
+		if ( !isset( $photo['url_o'] ) ) {
+			$photo['url_o'] = $this->flickrImporter->getPhpFlickr()->photos()->getLargestSize( $photo['id'] )['source'];
+		}
+
 		// Set up the page template and any other wikitext.
 		$this->output( "      - {$photo['id']} importing $title $photopageUrl\n" );
 		$fileUrl = $photo['url_o'];
@@ -282,18 +288,21 @@ class MaintenanceFlickrImporter extends Maintenance {
 			return;
 		}
 
+		// Verify fetched file.
+		$verification = $upload->verifyUpload();
+		if ( $verification['status'] !== UploadBase::OK ) {
+			$this->error(
+				"        Verification error:  "
+				. $upload->getVerificationErrorCode( $verification['status'] ) . "\n"
+			);
+			return;
+		}
+
 		// Check warnings.
 		$warnings = $upload->checkWarnings();
 		if ( $warnings ) {
 			// @todo Output actual warnings.
 			$this->error( "        Not uploaded. Warnings: " . implode( ',', array_keys( $warnings ) ) );
-			return;
-		}
-
-		// Verify fetched file.
-		$verification = $upload->verifyUpload();
-		if ( $verification['status'] !== UploadBase::OK ) {
-			$this->error( "        Verification error  " . $verification['status'] . "\n" );
 			return;
 		}
 

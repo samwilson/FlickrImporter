@@ -25,6 +25,8 @@ class FlickrImporter {
 	/** @var string */
 	public const PAGE_PROP_FLICKRID = 'flickrimporter_flickrid';
 
+	private ?PhpFlickr $phpFlickr = null;
+
 	public function __construct(
 		private readonly UserOptionsManager $userOptionsManager,
 		private readonly WikiPageFactory $wikiPageFactory,
@@ -33,10 +35,10 @@ class FlickrImporter {
 	) {
 	}
 
-	/**
-	 * @return PhpFlickr|bool
-	 */
-	public function getPhpFlickr() {
+	public function getPhpFlickr(): ?PhpFlickr {
+		if ( $this->phpFlickr ) {
+			return $this->phpFlickr;
+		}
 		$config = MediaWikiServices::getInstance()
 			->getConfigFactory()
 			->makeConfig( 'flickrimporter' );
@@ -44,9 +46,9 @@ class FlickrImporter {
 			 || !$config->get( 'FlickrImporterSecret' )
 		) {
 			// Not configured.
-			return false;
+			return null;
 		}
-		$flickr = new PhpFlickr(
+		$this->phpFlickr = new PhpFlickr(
 			$config->get( 'FlickrImporterKey' ),
 			$config->get( 'FlickrImporterSecret' )
 		);
@@ -58,9 +60,9 @@ class FlickrImporter {
 			$token->setAccessTokenSecret( $tokenData['secret'] );
 			$storage = new Memory();
 			$storage->storeAccessToken( 'Flickr', $token );
-			$flickr->setOauthStorage( $storage );
+			$this->phpFlickr->setOauthStorage( $storage );
 		}
-		return $flickr;
+		return $this->phpFlickr;
 	}
 
 	/**
@@ -103,8 +105,11 @@ class FlickrImporter {
 	 */
 	public function getUniqueFilename( $initialTitle ): string {
 		$shortTitle = substr( $initialTitle, 0, 230 );
+		// Remove invalid title characters.
 		$cleanTitle = preg_replace( TitleParser::getTitleInvalidRegex(), ' ', $shortTitle );
-		$title = Title::newFromTextThrow( $cleanTitle );
+		// Also remove dots, to avoid issues with filenames such as `example.com`.
+		$cleanTitle2 = str_replace( '.', ' ', $cleanTitle );
+		$title = Title::newFromTextThrow( $cleanTitle2 );
 		$db = $this->connectionProvider->getReplicaDatabase();
 		$similar = $db->selectField(
 			'page',
