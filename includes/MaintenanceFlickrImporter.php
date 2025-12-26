@@ -288,12 +288,12 @@ class MaintenanceFlickrImporter extends Maintenance {
 			return;
 		}
 
-		// Verify.
+		// Verify fetched file.
 		$verification = $upload->verifyUpload();
 		if ( $verification['status'] !== UploadBase::OK ) {
 			$this->error(
-				'        Unable to verity upload: '
-				. $upload->getVerificationErrorCode( $verification['status'] )
+				"        Verification error:  "
+				. $upload->getVerificationErrorCode( $verification['status'] ) . "\n"
 			);
 			return;
 		}
@@ -303,13 +303,6 @@ class MaintenanceFlickrImporter extends Maintenance {
 		if ( $warnings ) {
 			// @todo Output actual warnings.
 			$this->error( "        Not uploaded. Warnings: " . implode( ',', array_keys( $warnings ) ) );
-			return;
-		}
-
-		// Verify fetched file.
-		$verification = $upload->verifyUpload();
-		if ( $verification['status'] !== UploadBase::OK ) {
-			$this->error( "        Verification error  " . $verification['status'] . "\n" );
 			return;
 		}
 
